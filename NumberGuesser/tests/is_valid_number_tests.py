@@ -25,7 +25,7 @@ tests = [
 test_num = 0
 for test in tests:
     test_num+=1
-    out_value = is_valid(test[0])
+    out_value = is_valid(test[0], 100)
     if out_value==test[1]:
         result = "success"
     else:
