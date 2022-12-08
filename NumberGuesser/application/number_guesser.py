@@ -46,18 +46,11 @@ def want_to_play_again():
         
 
 if __name__ == "__main__":
-
     
-    want_to_play_again
-
-    
-
-    secret_num = rd.randint(1, 100)
-    play_guesser(secret_num)
-
-    
-    print('Хотите сыграть еще раз? Введите "да" или "нет".')
-    answer = input()
-    
-    if checking_num == secret_num:
-
+    want_to_play_a_game = True
+    while want_to_play_a_game:
+        secret_num = rd.randint(1, 100)
+        play_guesser(secret_num)
+        if not want_to_play_again():
+            want_to_play_a_game = False
+            
