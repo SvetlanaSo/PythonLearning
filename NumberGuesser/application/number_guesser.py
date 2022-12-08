@@ -11,9 +11,7 @@ def is_valid(number):
         return False
     return True
 
-
-if __name__ == "__main__":
-    secret_num = rd.randint(1, 100)
+def play_guesser(secret_num):
     print('Добро пожаловать в числовую угадайку')
     print('Мы загадали целое число от 1 до 100. Попробуете угадать? Введите число.')
 
@@ -26,12 +24,40 @@ if __name__ == "__main__":
         checking_num = int(checking_num)
         if checking_num == secret_num:
             print('Вы угадали, поздравляем!')
-            print('Спасибо, что играли в числовую угадайку. Еще увидимся...')
-            break
+            print('Спасибо, что играли в числовую угадайку.')
+            number_is_guessed = True
         if checking_num > secret_num:
             print('Ваше число больше загаданного, попробуйте еще разок')
         if checking_num < secret_num:
             print('Ваше число меньше загаданного, попробуйте еще разок')
+
+def want_to_play_again():
+    print('Хотите сыграть еще раз? Введите "да" или "нет".')
+    is_answer_correct = False
+    while not is_answer_correct:
+        answer = input().lower()
+        if answer== 'да':
+            return True
+        if answer == 'нет':
+            print('Еще увидимся...')
+            return False
+        else:
+            print('Введено неверное значение. Введите "да" или "нет".')
+        
+
+if __name__ == "__main__":
+
+    
+    want_to_play_again
+
     
 
+    secret_num = rd.randint(1, 100)
+    play_guesser(secret_num)
+
+    
+    print('Хотите сыграть еще раз? Введите "да" или "нет".')
+    answer = input()
+    
+    if checking_num == secret_num:
 
