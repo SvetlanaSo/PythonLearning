@@ -92,6 +92,9 @@ if __name__ == "__main__":
     amount_of_passwords = get_valid_amount_of_passwords()
     length_of_password = get_valid_length_of_password()
     chars = get_chars_collection()
-    for _ in range(amount_of_passwords):
-        new_password = generate_password(chars, length_of_password)
-        print(new_password)
+    if chars == '':
+        print('Недостаточно символов для генерации паролей.')
+    else:
+        for _ in range(amount_of_passwords):
+            new_password = generate_password(chars, length_of_password)
+            print(new_password)
