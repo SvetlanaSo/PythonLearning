@@ -1,6 +1,6 @@
 import random
 
-def is_valid():
+def get_valid_yes_or_no_answer():
     answer_is_valid = False
     while not answer_is_valid:
         answer = input().lower()
@@ -22,9 +22,7 @@ while True:
     question = input('Задай мне вопрос.')
     print(random.choice(answers))
     print('Хочешь узнать ответ на еще какой-нибудь вопрос? Ответь: "да" или "нет".')
-    answer = is_valid()
-    if answer == 'да' or answer == 'yes':
-        continue
+    answer = get_valid_yes_or_no_answer()
     if answer == 'нет' or answer == 'no':
         print('Возвращайся если возникнут вопросы!')
         break
