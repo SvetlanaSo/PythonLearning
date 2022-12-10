@@ -1,12 +1,20 @@
-def encryption(symbol_before, ROT, quantity):
-    encrypted_symbol = (symbol_before + ROT) % quantity
-    return encrypted_symbol
+def en_de_crypt_char(direction, char, ROT, language):
+    alphabet = get_alphabet_to_use(language, char.isupper())
+    index_char = alphabet.find(char)
+    if direction == 'ш':
+        new_index_char = (index_char + ROT) % len(alphabet)
+    if direction == 'д':
+        new_index_char = (index_char - ROT) % len(alphabet)
+    new_char = alphabet[new_index_char]
+    return new_char
 
 
-def de_cryption(symbol_after, ROT, quantity):
-    decrypted_symbol = (symbol_after - ROT) % quantity
-    return decrypted_symbol
-
+def create_new_string(text, direction, rotation, language):
+    crypted_text = ''
+    for c in text:
+            crypted_text += en_de_crypt_char(direction, c, rotation, language)
+    return crypted_text
+    
 
 def get_valid_direction():
     direction = input('Введите "ш", если хотите зашифровать текст, введите "д", если хотите дешифровать текст.').lower()
@@ -24,7 +32,7 @@ def get_valid_rotation():
     return int(rotation)
 
 
-def set_alphabet_both_registers():
+def set_alphabet():
     global low_register_eng 
     low_register_eng = 'abcdefghijklmnopqrstuvwxyz'
     global upper_register_eng
@@ -35,25 +43,37 @@ def set_alphabet_both_registers():
     upper_register_rus = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
 
 
-def get_alphabet_to_use():
-    language = input('Введите "р", если хотите зашифровать/ дешифровать текст на русском языке, или введите "а", если хотите зашифровать/ дешифровать текст на английском языке.')
-    while not (language == 'р' or language == 'а'):
+def get_language_to_use():
+    language = input('Введите "рус", если хотите зашифровать/ дешифровать текст на русском языке, или введите "eng", если хотите зашифровать/ дешифровать текст на английском языке.')
+    while not (language == 'рус' or language == 'eng'):
         print('Введено неверное значение.')
-        language = input('Введите "р", если хотите зашифровать/ дешифровать текст на русском языке, или введите "а", если хотите зашифровать/ дешифровать текст на английском языке.')
+        language = input('Введите "рус", если хотите зашифровать/ дешифровать текст на русском языке, или введите "eng", если хотите зашифровать/ дешифровать текст на английском языке.')
     return language
+
+
+def get_alphabet_to_use(lang, upper):
+    if lang == 'рус' and upper == True:
+        return upper_register_rus
+    if lang == 'рус' and upper == False:
+        return low_register_rus
+    if lang == 'eng' and upper == True:
+        return upper_register_eng
+    if lang == 'eng' and upper == False:
+        return low_register_eng
+
 
 def get_valid_text(language):
     is_valid = False
     while not is_valid:
         text = input('Введите текст для шифрования/ дешифрования.')
         the_same = True
-        if language == 'р':
+        if language == 'рус':
             for c in text:
                 if c in(low_register_eng) or c in(upper_register_eng):
                     print('В тексте содержатся английские буквы.  Введите текст на русском языке.')
                     the_same = False
                     break
-        if language == 'а':
+        if language == 'eng':
             for c in text:
                 if c in(low_register_rus) or c in(upper_register_rus):
                     print('В тексте содержатся русские буквы.  Введите текст на английском языке.')
@@ -65,21 +85,18 @@ def get_valid_text(language):
 
 
 if __name__ == "__main__":
-    set_alphabet_both_registers()
+    set_alphabet()
     print('Добро пожаловать в программу по шифрованию/ дешифрованию текстов. Давайте начнем.')
     while True:
         direction = get_valid_direction()
         rotation = get_valid_rotation()
-        language = get_alphabet_to_use()
+        language = get_language_to_use()
         text = get_valid_text(language)
+        text_to_print = create_new_string(text, direction, rotation, language)
 
+        print(text_to_print)
 
-
-
-        #if direction == 'ш':
-            #for c in text:
-             #   if c.isalpha():
-              #      text.replace(c, encryption(c, rotation, quantity))
-
-      #  if direction == 'д':
-
+        question = input('Хотите еще раз? Введите "да" или "нет".')
+        if question == 'нет':
+            print('До встречи!')
+            break
