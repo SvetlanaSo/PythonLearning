@@ -64,7 +64,7 @@ def get_chars_collection():
     if get_valid_answer_punctuation() == 'да':
         chars += punctuation
     if get_valid_answer_few_punctuation() == 'да':
-        for c in('il1Lo0O'):
+        for c in 'il1Lo0O':
             chars.replace(c, '')
     return chars
 

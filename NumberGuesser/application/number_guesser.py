@@ -12,7 +12,7 @@ def get_valid_number(maximum_value = "not defined"):
 
 def is_valid(number, max_value = "not defined"):
     for c in str(number):
-        if not c in('0123456789'):
+        if not c in '0123456789':
             return False
     if number == '':
         return False
