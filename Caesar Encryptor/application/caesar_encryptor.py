@@ -55,13 +55,13 @@ def get_language_to_use():
 
 
 def get_alphabet_to_use(lang, upper):
-    if lang == 'рус' and upper == True:
+    if lang == 'рус' and upper:
         return upper_register_rus
-    if lang == 'рус' and upper == False:
+    if lang == 'рус' and not upper:
         return low_register_rus
-    if lang == 'eng' and upper == True:
+    if lang == 'eng' and upper:
         return upper_register_eng
-    if lang == 'eng' and upper == False:
+    if lang == 'eng' and not upper:
         return low_register_eng
 
 
