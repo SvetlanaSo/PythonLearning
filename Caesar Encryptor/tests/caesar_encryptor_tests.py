@@ -11,3 +11,4 @@ print(ce.en_de_crypt_char('ш', 'A', 1, 'eng') == 'B')
 
 print('encrypt string tests:')
 print(ce.create_new_string('ABBA', 'ш', 1, 'eng') == 'BCCB')
+print(ce.create_new_string('ABBA, b', 'ш', 1, 'eng') == 'BCCB, c')

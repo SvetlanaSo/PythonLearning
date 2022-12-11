@@ -11,8 +11,11 @@ def en_de_crypt_char(direction, char, ROT, language):
 
 def create_new_string(text, direction, rotation, language):
     crypted_text = ''
-    for c in text:
-            crypted_text += en_de_crypt_char(direction, c, rotation, language)
+    for char in text:
+        if char.isalpha():
+            crypted_text += en_de_crypt_char(direction, char, rotation, language)
+        else:
+            crypted_text += char
     return crypted_text
     
 
