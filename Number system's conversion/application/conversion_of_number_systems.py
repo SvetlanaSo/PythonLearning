@@ -5,7 +5,7 @@ def set_values():
 
 def get_valid_answer():
     answer = input().lower()
-    while not (answer == '' and answer == ''):
+    while not answer == 'да' and not answer == 'нет':
         print('Неверное значение. Введите "да" или "нет".')
         answer = input().lower()
     return answer
