@@ -8,6 +8,14 @@ def get_valid_version():
     return word_or_char
 
 
+def get_valid_answer():
+    answer = input().lower()
+    while not (answer == 'да' or answer == 'нет'):
+        print('Введено некорректное значение. Введите "да" или "нет".')
+        answer = input().lower()
+    return answer
+
+
 def play(word):
 
     word_completion = '_' * len(word)
@@ -19,7 +27,7 @@ def play(word):
     print('Давайте играть в угадайку слов!')
     print(hangman.display_hangman(tries), f'Количество доступных попыток: {tries}.', sep='\n')
     print(word_completion)
-    while not guessed:
+    while not guessed and tries > 0:
         version = get_valid_version()
         if version in guessed_letters or version in guessed_words:
             print('Вы уже вводили эту букву/ слово. Попробуйте еще раз.')
@@ -43,6 +51,7 @@ def play(word):
             tries -= 1
 
         if guessed:
+            print(word_completion)
             print('Поздравляем, вы угадали слово! Вы победили!')
         elif tries == 0:
             print(hangman.display_hangman(tries))
@@ -55,6 +64,9 @@ def play(word):
 
 
 if __name__ == '__main__':
-    word_to_guess = dictionary.get_random_word()
-    play(word_to_guess)
-    
+    while True:
+        word_to_guess = dictionary.get_random_word()
+        play(word_to_guess)
+        print('Хотите сыграть еще раз? Введите "да" или "нет".')
+        if get_valid_answer() == 'нет':
+            break
