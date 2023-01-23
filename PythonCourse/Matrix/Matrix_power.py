@@ -11,10 +11,12 @@ size = int(input())
 matrix = [[int(i) for i in input().split()] for _ in range(size)]
 power = int(input())
 
-multi_m = matrix_multiply(matrix, matrix, size, size, size)
-
-for i in range(power - 2):
-    multi_m = matrix_multiply(multi_m, matrix, size, size, size)
+if power == 1:
+    multi_m = matrix
+else:
+    multi_m = matrix_multiply(matrix, matrix, size, size, size)
+    for i in range(power - 2):
+        multi_m = matrix_multiply(multi_m, matrix, size, size, size)
              
 for row in multi_m:
     print(*row)
