@@ -8,6 +8,4 @@ morse = [
 dict_morse_code = dict(zip(letters, morse))
 
 for el in input().upper():
-    for key, value in dict_morse_code.items():
-        if el == key:
-            print(value, end=' ')
+    print(dict_morse_code[el], end=' ')
