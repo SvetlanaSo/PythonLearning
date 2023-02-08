@@ -6,10 +6,11 @@ def get_dict():
     return dictionary
 
 def get_secret_word(dictionary, code):
-    code_set = set(code)
-    for el in code_set:
-        counter = code.count(el)
-        code = code.replace(el, dictionary[str(counter)])
+    code_dict = {}
+    for el in code:
+        code_dict[el] = code_dict.get(el, 0) + 1
+    for el in code_dict:
+        code = code.replace(el, dictionary[str(code_dict[el])])
     return code
 code = input()
 
