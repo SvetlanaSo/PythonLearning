@@ -28,10 +28,9 @@ class Beyond_SnakePitch:
     pass
 
 class SnakePitch:
-    def __init__(self, odd_block_color, even_block_color, apple_color, margin, size_block, count_blocks, header_margin):
+    def __init__(self, odd_block_color, even_block_color, margin, size_block, count_blocks, header_margin):
         self.odd_block_color = odd_block_color
         self.even_block_color = even_block_color
-        self.apple_color = apple_color
         self.margin = margin
         self.size_block = size_block
         self.count_blocks = count_blocks
@@ -87,23 +86,38 @@ class Snake:
         self.snake_blocks.pop(0)
         self.head = self.snake_blocks[-1]
 
+class Apple:
+    def __init__(self, apple_color, pitch: SnakePitch, snake: Snake):
+        self.apple_color = apple_color
+        self.pitch = pitch
+        self.snake = snake
+        self.apple_block = self.place_apple()
+
+    def place_apple(self):
+        x = random.randint(0, self.pitch.count_blocks - 1)
+        y = random.randint(0, self.pitch.count_blocks - 1)
+        apple_block = SnakeBlock(x, y)
+        while apple_block in self.snake.snake_blocks:
+            apple_block.x = random.randint(0, self.pitch.count_blocks - 1)
+            apple_block.y = random.randint(0, self.pitch.count_blocks - 1)
+        return apple_block
+
+    def draw_apple(self):
+        draw_block(self.apple_color, self.apple_block.x, self.apple_block.y)
+
+    def is_eaten(self):
+        return self.apple_block == self.snake.head
+
+
 def draw_block(color, row, column):
     return pygame.draw.rect(screen, color, [SIZE_BLOCK + column * SIZE_BLOCK + MARGIN * (column + 1), 
     HEADER_MARGIN + SIZE_BLOCK+ row * SIZE_BLOCK + MARGIN * (row + 1), SIZE_BLOCK, SIZE_BLOCK])
 
 def start_the_game():
-    pitch = SnakePitch(WHITE, BLUE, RED, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
+    pitch = SnakePitch(WHITE, BLUE, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
     snake = Snake(SNAKE_COLOR, pitch)
-    def get_random_empty_block():
-        x = random.randint(0, COUNT_BLOCKS - 1)
-        y = random.randint(0, COUNT_BLOCKS - 1)
-        empty_block = SnakeBlock(x, y)
-        while empty_block in snake.snake_blocks:
-            empty_block.x = random.randint(0, COUNT_BLOCKS - 1)
-            empty_block.y = random.randint(0, COUNT_BLOCKS - 1)
-        return empty_block
+    apple = Apple(RED, pitch, snake)
 
-    apple = get_random_empty_block()
     d_row = 0
     d_col = 1
     total = 0
@@ -139,7 +153,7 @@ def start_the_game():
         screen.blit(text_speed, (SIZE_BLOCK + 230, SIZE_BLOCK))
         
         pitch.draw_pitch()
-        draw_block(RED, apple.x, apple.y)
+        apple.draw_apple()
         snake.draw_snake()
 
         if not snake.is_valid():
@@ -148,11 +162,11 @@ def start_the_game():
             #pygame.quit()
             #sys.exit()
         
-        if apple == snake.head:
+        if apple.is_eaten():
             total += 1
             speed = total // 5 + 1
-            snake.snake_blocks.append(apple)
-            apple = get_random_empty_block()
+            snake.snake_blocks.append(apple.apple_block)
+            apple = Apple(RED, pitch, snake)
 
         was_keydown = False
 
