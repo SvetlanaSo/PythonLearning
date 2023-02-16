@@ -11,7 +11,6 @@ BLUE = (204, 255, 255)
 RED = (224, 0, 0)
 SNAKE_COLOR = (0, 144, 0)
 HEADER_COLOR = (0, 204, 153)
-
 SIZE_BLOCK = 20
 COUNT_BLOCKS = 20
 MARGIN = 1
@@ -25,32 +24,85 @@ pygame.display.set_caption('Snake')
 timer = pygame.time.Clock()
 courier = pygame.font.SysFont('courier', 36)
 
+class Beyond_SnakePitch:
+    pass
+
+class SnakePitch:
+    def __init__(self, odd_block_color, even_block_color, apple_color, margin, size_block, count_blocks, header_margin):
+        self.odd_block_color = odd_block_color
+        self.even_block_color = even_block_color
+        self.apple_color = apple_color
+        self.margin = margin
+        self.size_block = size_block
+        self.count_blocks = count_blocks
+        self.header_margin = header_margin
+        self.size_x, self.size_y = self.get_size()
+
+    def get_size(self):
+        return self.size_block * self.count_blocks + self.margin * self.count_blocks + 2 * self.size_block, \
+        self.size_block * self.count_blocks + self.margin * self.count_blocks + 2 * self.size_block + self.header_margin
+
+    def draw_pitch(self):
+        for row in range(self.count_blocks):
+            for column in range(self.count_blocks):
+                if (column + row) % 2 == 0:
+                    color = self.even_block_color
+                else:
+                    color = self.odd_block_color
+                draw_block(color, row, column)
+        
+
 class SnakeBlock:
-    def __init__(self, x, y):
+    def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
-    def is_inside(self):
-        return 0 <= self.x < COUNT_BLOCKS and 0 <= self.y < COUNT_BLOCKS
+    def is_inside(self, pitch: SnakePitch):
+        return 0 <= self.x < pitch.count_blocks and 0 <= self.y < pitch.count_blocks
     def __eq__(self, other):
         return isinstance(other, SnakeBlock) and self.x == other.x and self.y == other.y
 
+class Snake:
+    def __init__(self, snake_color, pitch: SnakePitch):
+        self.snake_color = snake_color
+        self.pitch = pitch
+        self.snake_blocks = self.get_snake_blocks()
+        self.head = self.snake_blocks[-1]
+    
+    def get_snake_blocks(self):
+        mid_x = self.pitch.count_blocks // 2
+        mid_y = self.pitch.count_blocks // 2
+        return [SnakeBlock(mid_x, mid_y - 1), SnakeBlock(mid_x, mid_y), SnakeBlock(mid_x, mid_y + 1)]
+
+    def draw_snake(self):
+        for block in self.snake_blocks:
+            draw_block(self.snake_color, block.x, block.y)
+
+    def is_valid(self):
+        inside_itself = self.head in self.snake_blocks[:-1]
+        return not inside_itself and self.head.is_inside(self.pitch)
+
+    def make_move(self, d_row, d_col):
+        new_head = SnakeBlock(self.head.x + d_row, self.head.y + d_col)
+        self.snake_blocks.append(new_head)
+        self.snake_blocks.pop(0)
+        self.head = self.snake_blocks[-1]
 
 def draw_block(color, row, column):
     return pygame.draw.rect(screen, color, [SIZE_BLOCK + column * SIZE_BLOCK + MARGIN * (column + 1), 
     HEADER_MARGIN + SIZE_BLOCK+ row * SIZE_BLOCK + MARGIN * (row + 1), SIZE_BLOCK, SIZE_BLOCK])
 
 def start_the_game():
-
+    pitch = SnakePitch(WHITE, BLUE, RED, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
+    snake = Snake(SNAKE_COLOR, pitch)
     def get_random_empty_block():
         x = random.randint(0, COUNT_BLOCKS - 1)
         y = random.randint(0, COUNT_BLOCKS - 1)
         empty_block = SnakeBlock(x, y)
-        while empty_block in snake_blocks:
+        while empty_block in snake.snake_blocks:
             empty_block.x = random.randint(0, COUNT_BLOCKS - 1)
             empty_block.y = random.randint(0, COUNT_BLOCKS - 1)
         return empty_block
 
-    snake_blocks = [SnakeBlock(9, 8), SnakeBlock(9, 9), SnakeBlock(9, 10)]
     apple = get_random_empty_block()
     d_row = 0
     d_col = 1
@@ -86,39 +138,25 @@ def start_the_game():
         text_speed = courier.render(f'Speed: {speed}', 0, WHITE)
         screen.blit(text_speed, (SIZE_BLOCK + 230, SIZE_BLOCK))
         
-        for row in range(COUNT_BLOCKS):
-            for column in range(COUNT_BLOCKS):
-                if (column + row) % 2 == 0:
-                    color = BLUE
-                else:
-                    color = WHITE
-                draw_block(color, row, column)
+        pitch.draw_pitch()
+        draw_block(RED, apple.x, apple.y)
+        snake.draw_snake()
 
-        head = snake_blocks[-1]
-
-        if not head.is_inside() or head in snake_blocks[:-1]:
+        if not snake.is_valid():
             print('crash')
             break
             #pygame.quit()
             #sys.exit()
-
-
-        draw_block(RED, apple.x, apple.y)
-
-        for block in snake_blocks:
-            draw_block(SNAKE_COLOR, block.x, block.y)
         
-        if apple == head:
+        if apple == snake.head:
             total += 1
             speed = total // 5 + 1
-            snake_blocks.append(apple)
+            snake.snake_blocks.append(apple)
             apple = get_random_empty_block()
-            
-        was_keydown = False
-        new_head = SnakeBlock(head.x + d_row, head.y + d_col)
-        snake_blocks.append(new_head)
-        snake_blocks.pop(0)
 
+        was_keydown = False
+
+        snake.make_move(d_row, d_col)
 
         pygame.display.flip()
         timer.tick(3 + speed)
