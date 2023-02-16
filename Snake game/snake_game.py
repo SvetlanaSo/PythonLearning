@@ -4,7 +4,6 @@ import random
 import pygame_menu
 pygame.init()
 bg_image = pygame.image.load('/Users/Svetlana/PythonLearning/Snake game/images/IMG_1512.jpg')
-
 FRAME_COLOR = (0, 255, 204)
 WHITE = (255, 255, 255)
 BLUE = (204, 255, 255)
@@ -55,6 +54,8 @@ class SnakeBlock:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
+        self.prev = None
+        self.next = None
     def is_inside(self, pitch: SnakePitch):
         return 0 <= self.x < pitch.count_blocks and 0 <= self.y < pitch.count_blocks
     def __eq__(self, other):
@@ -64,27 +65,54 @@ class Snake:
     def __init__(self, snake_color, pitch: SnakePitch):
         self.snake_color = snake_color
         self.pitch = pitch
-        self.snake_blocks = self.get_snake_blocks()
-        self.head = self.snake_blocks[-1]
+        self.head, self.tail = self.get_snake_head_and_tail()
     
-    def get_snake_blocks(self):
-        mid_x = self.pitch.count_blocks // 2
-        mid_y = self.pitch.count_blocks // 2
-        return [SnakeBlock(mid_x, mid_y - 1), SnakeBlock(mid_x, mid_y), SnakeBlock(mid_x, mid_y + 1)]
+    def get_snake_head_and_tail(self):
+        head_x = self.pitch.count_blocks // 2
+        head_y = self.pitch.count_blocks // 2 + 1
+        head_block = SnakeBlock(head_x, head_y)
+        mid_block = SnakeBlock(head_x, head_y - 1)
+        tail_block = SnakeBlock(head_x, head_y - 2)
+
+        head_block.next = mid_block
+        mid_block.prev = head_block
+
+        mid_block.next = tail_block
+        tail_block.prev = mid_block
+        return head_block, tail_block
 
     def draw_snake(self):
-        for block in self.snake_blocks:
+        block = self.head
+        while block != None:
             draw_block(self.snake_color, block.x, block.y)
+            block = block.next
 
     def is_valid(self):
-        inside_itself = self.head in self.snake_blocks[:-1]
-        return not inside_itself and self.head.is_inside(self.pitch)
+        return not self.is_in_snake(self.head, include_head = False) and self.head.is_inside(self.pitch)
 
     def make_move(self, d_row, d_col):
         new_head = SnakeBlock(self.head.x + d_row, self.head.y + d_col)
-        self.snake_blocks.append(new_head)
-        self.snake_blocks.pop(0)
-        self.head = self.snake_blocks[-1]
+        
+        new_head.next = self.head
+        self.head.prev = new_head
+        self.head = new_head
+
+        new_tail = self.tail.prev
+        new_tail.next = None
+        self.tail.prev = None
+        del self.tail
+        self.tail = new_tail
+    
+    def is_in_snake(self, block: SnakeBlock, include_head = True):
+        if include_head:
+            snake_block = self.head
+        else:
+            snake_block = self.head.next
+        while snake_block != None:
+            if snake_block == block:
+                return True
+            snake_block = snake_block.next
+        return False
 
 class Apple:
     def __init__(self, apple_color, pitch: SnakePitch, snake: Snake):
@@ -97,7 +125,7 @@ class Apple:
         x = random.randint(0, self.pitch.count_blocks - 1)
         y = random.randint(0, self.pitch.count_blocks - 1)
         apple_block = SnakeBlock(x, y)
-        while apple_block in self.snake.snake_blocks:
+        while self.snake.is_in_snake(apple_block):
             apple_block.x = random.randint(0, self.pitch.count_blocks - 1)
             apple_block.y = random.randint(0, self.pitch.count_blocks - 1)
         return apple_block
@@ -165,7 +193,11 @@ def start_the_game():
         if apple.is_eaten():
             total += 1
             speed = total // 5 + 1
-            snake.snake_blocks.append(apple.apple_block)
+
+            apple.apple_block.prev = snake.tail
+            snake.tail.next = apple.apple_block
+            snake.tail = apple.apple_block
+
             apple = Apple(RED, pitch, snake)
 
         was_keydown = False
