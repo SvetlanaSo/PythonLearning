@@ -56,14 +56,15 @@ def start_the_game():
     d_col = 1
     total = 0
     speed = 1
-
+    was_keydown = False
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 print('exit')
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN and not was_keydown:
+                was_keydown = True
                 if event.key == pygame.K_UP and d_col != 0:
                     d_row = -1
                     d_col = 0
@@ -112,7 +113,8 @@ def start_the_game():
             speed = total // 5 + 1
             snake_blocks.append(apple)
             apple = get_random_empty_block()
-
+            
+        was_keydown = False
         new_head = SnakeBlock(head.x + d_row, head.y + d_col)
         snake_blocks.append(new_head)
         snake_blocks.pop(0)
