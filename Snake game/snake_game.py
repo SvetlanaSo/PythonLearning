@@ -136,6 +136,31 @@ class Apple:
     def is_eaten(self):
         return self.apple_block == self.snake.head
 
+class SnakeController:
+    def __init__(self, up, down, left, right):
+        self.up = up
+        self.down = down
+        self.right = right
+        self.left = left
+        self.was_keydown = False
+        
+    def get_drow_dcol(self, event, cur_d_row, cur_d_col):
+        if self.was_keydown:
+            return cur_d_row, cur_d_col
+        if event.key == self.up and cur_d_col != 0:
+            self.was_keydown = True
+            return  -1, 0
+        elif event.key == self.down and cur_d_col != 0:
+            self.was_keydown = True
+            return 1, 0
+        elif event.key == self.left and cur_d_row != 0:
+            self.was_keydown = True
+            return 0, -1
+        elif event.key == self.right and cur_d_row != 0:
+            self.was_keydown = True
+            return 0, 1
+        return cur_d_row, cur_d_col
+
 
 def draw_block(color, row, column):
     return pygame.draw.rect(screen, color, [SIZE_BLOCK + column * SIZE_BLOCK + MARGIN * (column + 1), 
@@ -145,34 +170,23 @@ def start_the_game():
     pitch = SnakePitch(WHITE, BLUE, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
     snake = Snake(SNAKE_COLOR, pitch)
     apple = Apple(RED, pitch, snake)
+    controller1 = SnakeController(pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
+    controller2 = SnakeController(pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d)
 
     d_row = 0
     d_col = 1
     total = 0
     speed = 1
-    was_keydown = False
+    
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 print('exit')
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.KEYDOWN and not was_keydown:
-                was_keydown = True
-                if event.key == pygame.K_UP and d_col != 0:
-                    d_row = -1
-                    d_col = 0
-                elif event.key == pygame.K_DOWN and d_col != 0:
-                    d_row = 1
-                    d_col = 0
-                elif event.key == pygame.K_LEFT and d_row != 0:
-                    d_row = 0
-                    d_col = -1
-                elif event.key == pygame.K_RIGHT and d_row != 0:
-                    d_row = 0
-                    d_col = 1
+            elif event.type == pygame.KEYDOWN:
+                d_row, d_col = controller1.get_drow_dcol(event, d_row, d_col)
 
-        
         screen.fill(FRAME_COLOR)
         pygame.draw.rect(screen, HEADER_COLOR, [0, 0, size[0], HEADER_MARGIN])
         text_total = courier.render(f'Total: {total}', 0, WHITE)
@@ -187,8 +201,6 @@ def start_the_game():
         if not snake.is_valid():
             print('crash')
             break
-            #pygame.quit()
-            #sys.exit()
         
         if apple.is_eaten():
             total += 1
@@ -200,7 +212,7 @@ def start_the_game():
 
             apple = Apple(RED, pitch, snake)
 
-        was_keydown = False
+        controller1.was_keydown = False
 
         snake.make_move(d_row, d_col)
 
