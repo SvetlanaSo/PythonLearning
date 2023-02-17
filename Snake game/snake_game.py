@@ -49,7 +49,23 @@ class SnakePitch:
                     color = self.odd_block_color
                 draw_block(color, row, column)
         
-
+class SnakeController:
+    def __init__(self, up, down, left, right):
+        self.up = up
+        self.down = down
+        self.right = right
+        self.left = left
+        
+    def get_drow_dcol(self, event, cur_d_row, cur_d_col):
+        if event.key == self.up and cur_d_col != 0:
+            return  -1, 0
+        elif event.key == self.down and cur_d_col != 0:
+            return 1, 0
+        elif event.key == self.left and cur_d_row != 0:
+            return 0, -1
+        elif event.key == self.right and cur_d_row != 0:
+            return 0, 1
+        return cur_d_row, cur_d_col
 class SnakeBlock:
     def __init__(self, x: int, y: int):
         self.x = x
@@ -62,12 +78,15 @@ class SnakeBlock:
         return isinstance(other, SnakeBlock) and self.x == other.x and self.y == other.y
 
 class Snake:
-    def __init__(self, snake_color, pitch: SnakePitch):
+    def __init__(self, snake_color, pitch: SnakePitch, controller: SnakeController, start_d_row, start_d_col):
         self.snake_color = snake_color
         self.pitch = pitch
         self.head, self.tail = self.get_snake_head_and_tail()
+        self.controller = controller
+        self.d_row = start_d_row
+        self.d_col = start_d_col
     
-    def get_snake_head_and_tail(self):
+    def get_snake_head_and_tail(self): #надо еще дрол и дкол передать в зависимости от номера игрока
         head_x = self.pitch.count_blocks // 2
         head_y = self.pitch.count_blocks // 2 + 1
         head_block = SnakeBlock(head_x, head_y)
@@ -90,8 +109,10 @@ class Snake:
     def is_valid(self):
         return not self.is_in_snake(self.head, include_head = False) and self.head.is_inside(self.pitch)
 
-    def make_move(self, d_row, d_col):
-        new_head = SnakeBlock(self.head.x + d_row, self.head.y + d_col)
+    def make_move(self, event):
+        if event != None:
+            self.d_row, self.d_col = self.controller.get_drow_dcol(event, self.d_row, self.d_col)
+        new_head = SnakeBlock(self.head.x + self.d_row, self.head.y + self.d_col)
         
         new_head.next = self.head
         self.head.prev = new_head
@@ -136,30 +157,7 @@ class Apple:
     def is_eaten(self):
         return self.apple_block == self.snake.head
 
-class SnakeController:
-    def __init__(self, up, down, left, right):
-        self.up = up
-        self.down = down
-        self.right = right
-        self.left = left
-        self.was_keydown = False
-        
-    def get_drow_dcol(self, event, cur_d_row, cur_d_col):
-        if self.was_keydown:
-            return cur_d_row, cur_d_col
-        if event.key == self.up and cur_d_col != 0:
-            self.was_keydown = True
-            return  -1, 0
-        elif event.key == self.down and cur_d_col != 0:
-            self.was_keydown = True
-            return 1, 0
-        elif event.key == self.left and cur_d_row != 0:
-            self.was_keydown = True
-            return 0, -1
-        elif event.key == self.right and cur_d_row != 0:
-            self.was_keydown = True
-            return 0, 1
-        return cur_d_row, cur_d_col
+
 
 
 def draw_block(color, row, column):
@@ -167,25 +165,19 @@ def draw_block(color, row, column):
     HEADER_MARGIN + SIZE_BLOCK+ row * SIZE_BLOCK + MARGIN * (row + 1), SIZE_BLOCK, SIZE_BLOCK])
 
 def start_the_game():
-    pitch = SnakePitch(WHITE, BLUE, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
-    snake = Snake(SNAKE_COLOR, pitch)
-    apple = Apple(RED, pitch, snake)
     controller1 = SnakeController(pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
+    pitch = SnakePitch(WHITE, BLUE, MARGIN, SIZE_BLOCK, COUNT_BLOCKS, HEADER_MARGIN)
+    snake = Snake(SNAKE_COLOR, pitch, controller1, 0, 1)
+    apple = Apple(RED, pitch, snake)
     controller2 = SnakeController(pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d)
 
-    d_row = 0
-    d_col = 1
     total = 0
     speed = 1
     
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                print('exit')
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                d_row, d_col = controller1.get_drow_dcol(event, d_row, d_col)
+        if not snake.is_valid():
+            print('crash')
+            break
 
         screen.fill(FRAME_COLOR)
         pygame.draw.rect(screen, HEADER_COLOR, [0, 0, size[0], HEADER_MARGIN])
@@ -193,15 +185,21 @@ def start_the_game():
         screen.blit(text_total, (SIZE_BLOCK, SIZE_BLOCK))
         text_speed = courier.render(f'Speed: {speed}', 0, WHITE)
         screen.blit(text_speed, (SIZE_BLOCK + 230, SIZE_BLOCK))
-        
+
         pitch.draw_pitch()
         apple.draw_apple()
         snake.draw_snake()
 
-        if not snake.is_valid():
-            print('crash')
-            break
-        
+        keydown_event = None
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                print('exit')
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                keydown_event = event
+                break
+                
         if apple.is_eaten():
             total += 1
             speed = total // 5 + 1
@@ -212,9 +210,7 @@ def start_the_game():
 
             apple = Apple(RED, pitch, snake)
 
-        controller1.was_keydown = False
-
-        snake.make_move(d_row, d_col)
+        snake.make_move(keydown_event)
 
         pygame.display.flip()
         timer.tick(3 + speed)
