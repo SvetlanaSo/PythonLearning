@@ -4,6 +4,8 @@ import random
 import pygame_menu
 pygame.init()
 
+bg_image = pygame.image.load('/Users/Svetlana/PythonLearning/Snake game/images/IMG_1512.jpg')
+
 FRAME_COLOR = (255, 182, 193)
 HEADER_COLOR = (255, 182, 193)
 PITCH_COLOR = (255, 239, 213)
@@ -16,6 +18,7 @@ PITCH_SIZE_X = 660
 PITCH_SIZE_Y = 500
 TOP_MARGIN = 80
 OST_MARGINS = 20
+
 GUARD_SIZE_X = 150
 GUARD_SIZE_Y = 20
 GUARD_PITCH_Y = PITCH_SIZE_Y - GUARD_SIZE_Y
@@ -166,75 +169,104 @@ class Ball:
             if self.was_bottom_clashed(target):
                 self.y = target.place_on_pitch_y + self.radius + target.size_y
                 self.speed_y *= - 1
-                targets.remove(target)
+                self.targets.remove(target)
                 break
             if self.was_top_clashed(target):
                 self.y = target.place_on_pitch_y - self.radius
                 self.speed_y *= -1
-                targets.remove(target)
+                self.targets.remove(target)
                 break
             if self.was_left_side_clashed(target):
                 self.x = target.place_on_pitch_x - self.radius
                 self.speed_x *= -1
-                targets.remove(target)
+                self.targets.remove(target)
                 break
             if self.was_right_side_clashed(target):
                 self.x = target.place_on_pitch_x + self.radius + target.size_x
                 self.speed_x *= - 1
-                targets.remove(target)
+                self.targets.remove(target)
                 break                
 
+class Level:
+    def __init__(self, level_num):
+        self.level_num = level_num
+    
+    def create_level (self):
+        if self.level_num == 1:
+            self.controller = GuardController(pygame.K_LEFT, pygame.K_RIGHT)
+            self.pitch = Pitch(PITCH_SIZE_X, PITCH_SIZE_Y, PITCH_COLOR, TOP_MARGIN, OST_MARGINS)
+            self.guard = Guard(GUARD_SIZE_X, GUARD_SIZE_Y, GUARD_COLOR, GUARD_PITCH_X, GUARD_PITCH_Y, self.pitch, self.controller)
+            self.targets = []
+            self.ball = Ball(BALL_X, BALL_Y, BALL_RADIUS, BALL_COLOR, self.pitch, self.guard, self.targets)
 
-level = 1
+            for i in range(70, self.pitch.size_y // 3, TARGET_SIZE_Y + 4):
+                for j in range(4, self.pitch.size_x, TARGET_SIZE_X + 4):
+                    target = Target(TARGET_SIZE_X, TARGET_SIZE_Y, TARGET_COLOR, j, i, self.pitch)
+                    if target.size_x + target.place_on_pitch_x >= self.pitch.size_x:
+                        break
+                    self.targets.append(target)
 
-controller = GuardController(pygame.K_LEFT, pygame.K_RIGHT)
-pitch = Pitch(PITCH_SIZE_X, PITCH_SIZE_Y, PITCH_COLOR, TOP_MARGIN, OST_MARGINS)
-guard = Guard(GUARD_SIZE_X, GUARD_SIZE_Y, GUARD_COLOR, GUARD_PITCH_X, GUARD_PITCH_Y, pitch, controller)
-targets = []
-ball = Ball(BALL_X, BALL_Y, BALL_RADIUS, BALL_COLOR, pitch, guard, targets)
-#ball_new = Ball(BALL_X-100, BALL_Y-100, BALL_RADIUS, BALL_COLOR, pitch, guard, targets)
+    def complete_level (self, screen):
+        while True:
+            screen.fill(FRAME_COLOR)
+            pygame.draw.rect(screen, HEADER_COLOR, [0, 0, size[0], TOP_MARGIN])
+            self.text_level = courier.render(f'Level: {self.level_num}', 0, TEXT_COLOR)
+            screen.blit(self.text_level, (20, 20))
 
-for i in range(70, pitch.size_y // 3, TARGET_SIZE_Y + 4):
-    for j in range(4, pitch.size_x, TARGET_SIZE_X + 4):
-        target = Target(TARGET_SIZE_X, TARGET_SIZE_Y, TARGET_COLOR, j, i, pitch)
-        if target.size_x + target.place_on_pitch_x >= pitch.size_x:
-            break
-        targets.append(target)
+            self.pitch.draw_pitch(screen)
+            self.guard.draw_guard(screen)
+            
+            for target in self.targets:
+                target.draw_target(screen)
+            
+            self.guard.make_move()
+            self.ball.draw_ball(screen)
+            self.ball.make_move()
+            if self.ball.was_lost():
+                return False
+            if len(self.targets) == 0:
+                return True
+
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    exit()
+                elif event.type == pygame.KEYDOWN:
+                    self.guard.start_move(event)
+                elif event.type == pygame.KEYUP:
+                    self.guard.stop_move()
+            
+            pygame.display.flip()
+            timer.tick(30)
+            
+
+
+def play_game():
+    level = Level(1)
+    while True:
+        level.create_level()
+        if level.complete_level(screen):
+            level.level_num += 1
+            return
+        else:
+            return
+
+menu = pygame_menu.Menu('Welcome', 700, 580,
+                       theme=pygame_menu.themes.THEME_SOLARIZED)
+
+menu.add.text_input('Name :', default='Player 1')
+menu.add.button('Play', play_game)
+menu.add.button('Quit', pygame_menu.events.EXIT)
 
 while True:
-    #level.create(1)
-    #level.play()
-
-    screen.fill(FRAME_COLOR)
-    pygame.draw.rect(screen, HEADER_COLOR, [0, 0, size[0], TOP_MARGIN])
-    text_level = courier.render(f'Level: {level}', 0, TEXT_COLOR)
-    screen.blit(text_level, (20, 20))
-
-    pitch.draw_pitch(screen)
-    guard.draw_guard(screen)
-    
-    for target in targets:
-        target.draw_target(screen)
-    
-    guard.make_move()
-    ball.draw_ball(screen)
-    ball.make_move()
-    #ball_new.draw_ball(screen)
-    #ball_new.make_move()
-    
-    if ball.was_lost():
-        break
 
     events = pygame.event.get()
     for event in events:
         if event.type == pygame.QUIT:
             exit()
-        elif event.type == pygame.KEYDOWN:
-            guard.start_move(event)
-        elif event.type == pygame.KEYUP:
-            guard.stop_move()
 
+    if menu.is_enabled():
+        menu.update(events)
+        menu.draw(screen)
 
-    pygame.display.flip()
-    timer.tick(30)
-    #pygame.display.update()
+    pygame.display.update()
