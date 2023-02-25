@@ -5,6 +5,8 @@ import pygame_menu
 pygame.init()
 
 bg_image = pygame.image.load('/Users/Svetlana/PythonLearning/Snake game/images/IMG_1512.jpg')
+surprise_ball_image = pygame.image.load('/Users/Svetlana/PythonLearning/Arcanoid/pictures/ball.png').convert_alpha()
+
 
 FRAME_COLOR = (255, 182, 193)
 HEADER_COLOR = (255, 182, 193)
@@ -241,7 +243,7 @@ class Ball:
                     target.color = target.change_color()               
 
 class Surprise:
-    def __init__(self, size_x, size_y, color, place_on_pitch_x, place_on_pitch_y, pitch: Pitch, guard: Guard, balls, targets):
+    def __init__(self, size_x, size_y, color, place_on_pitch_x, place_on_pitch_y, pitch: Pitch, guard: Guard, balls, targets, player_life):
         self.is_active = False
         self.size_x = size_x
         self.size_y = size_y
@@ -254,6 +256,7 @@ class Surprise:
         self.place_on_pitch_y = place_on_pitch_y
         self.balls = balls
         self.targets = targets
+        self.player_life = player_life
     
     def release(self):
         self.is_active = True
@@ -290,8 +293,12 @@ class Surprise:
         ball.speed_y = -abs(self.balls[0].speed_y) 
         self.balls.append(ball)
 
+    def remove_player_life(self):
+        while self.player_life > 0:
+            self.player_life -= 1
+
     def apply_effect(self):
-        lst_of_effects = [self.speed_up_ball, self.slow_down_guard, self.speed_up_guard, self.add_balls]
+        lst_of_effects = [self.speed_up_ball, self.slow_down_guard, self.speed_up_guard, self.add_balls, self.remove_player_life]
         return random.choice(lst_of_effects)
 
     def was_guard_clashed(self, other):
@@ -314,13 +321,15 @@ class Surprise:
                 return True
         return False
 class Level:
-    def __init__(self, level_num):
+    def __init__(self, level_num, player_lifes):
         self.level_num = level_num
+        self.player_lifes = player_lifes
     
     def create_level (self):
+        self.controller = GuardController(pygame.K_LEFT, pygame.K_RIGHT)
+        self.pitch = Pitch(PITCH_SIZE_X, PITCH_SIZE_Y, PITCH_COLOR, TOP_MARGIN, OST_MARGINS)
+
         if self.level_num == 1:
-            self.controller = GuardController(pygame.K_LEFT, pygame.K_RIGHT)
-            self.pitch = Pitch(PITCH_SIZE_X, PITCH_SIZE_Y, PITCH_COLOR, TOP_MARGIN, OST_MARGINS)
             self.guard = Guard(GUARD_SIZE_X, GUARD_SIZE_Y, GUARD_COLOR, GUARD_PITCH_X, GUARD_PITCH_Y, self.pitch, self.controller)
             self.targets = []
             self.surprises = []
@@ -334,7 +343,7 @@ class Level:
                     else:
                         life_num = 1
                     if j in self.sample_for_j:
-                        surprise = Surprise(SURPRISE_SIZE_X, SURPRISE_SIZE_Y, SURPRISE_COLOR, j + 4, i, self.pitch, self.guard, self.balls, self.targets)
+                        surprise = Surprise(SURPRISE_SIZE_X, SURPRISE_SIZE_Y, SURPRISE_COLOR, j + 4, i, self.pitch, self.guard, self.balls, self.targets, self.player_lifes)
                         target = Target(TARGET_SIZE_X, TARGET_SIZE_Y, TARGET_COLOR, j, i, self.pitch, life_num, surprise)
                         self.surprises.append(surprise)
                     else:
@@ -342,13 +351,18 @@ class Level:
                     if target.size_x + target.place_on_pitch_x >= self.pitch.size_x:
                         break
                     self.targets.append(target)
+        
+        if self.level_num == 2:
+            pass
 
     def complete_level (self, screen):
-        while True:
+        while self.player_lifes > 0:
             screen.fill(FRAME_COLOR)
             pygame.draw.rect(screen, HEADER_COLOR, [0, 0, size[0], TOP_MARGIN])
             self.text_level = courier.render(f'Level: {self.level_num}', 0, TEXT_COLOR)
             screen.blit(self.text_level, (20, 20))
+            self.text_player_life = courier.render(f"Remaining lifes: {self.player_lifes}", 0, TEXT_COLOR)
+            screen.blit(self.text_player_life, (300, 20))
 
             self.pitch.draw_pitch(screen)
             self.guard.draw_guard(screen)
@@ -361,14 +375,21 @@ class Level:
             for ball in self.balls:
                 ball.draw_ball(screen)
                 ball.make_move()
-                if ball.was_lost() and len(self.balls) == 1:
-                    return False
-                elif ball.was_lost() and len(self.balls) > 1:
-                    self.balls.remove(ball)
+                if ball.was_lost():
+                    if len(self.balls) == 1 and self.player_lifes == 0:
+                        return False
+                    elif len(self.balls) == 1 and self.player_lifes > 0:
+                        self.player_lifes -= 1
+                        ball.speed_y *= -1
+
+                    elif len(self.balls) > 1:
+                        self.balls.remove(ball)
 
                 if len(self.targets) == 0:
                     return True
             
+
+
             for surprise in self.surprises:
                 surprise.draw_surprise(screen)
                 if surprise.make_move():
@@ -389,7 +410,7 @@ class Level:
             
 
 def play_game():
-    level = Level(1)
+    level = Level(1, 2)
     while True:
         level.create_level()
         if level.complete_level(screen):
